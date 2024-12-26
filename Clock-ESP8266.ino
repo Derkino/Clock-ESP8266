@@ -53,32 +53,59 @@ void setup() {
   parola.setIntensity(0);
   parola.setTextAlignment(PA_CENTER);
 
+  parola.print("Start..");
+
+  delay(2000);
+
+  parola.print("Voir");
+
+  delay(2000);
+  
+  parola.print("Notice");
+
+  delay(2000);
+
+
   WiFiManager wifiManager;
-  wifiManager.setTimeout(180);
-  if (!wifiManager.autoConnect("Horloge_Config", "YOURPASSWORD")) {
+  wifiManager.setTimeout(60);
+  
+  if (!wifiManager.autoConnect("Horloge_Config_V1", "YOURPASS")) {
+    parola.print("FAIL");
+    delay(5000);
     ESP.restart();
   }
 
   timeClient.begin();
 }
 
+
 void loop() {
-  timeClient.update();
+  if (WiFi.status() == WL_CONNECTED) {
+    timeClient.update();
 
-  int rawHours = timeClient.getHours();
-  int rawMinutes = timeClient.getMinutes();
+    int rawHours = timeClient.getHours();
+    int rawMinutes = timeClient.getMinutes();
 
-  int offset = 3600;
-  if (isDaylightSavingTime(timeClient.getEpochTime())) {
-    offset += 3600;
+    int offset = 3600;
+    if (isDaylightSavingTime(timeClient.getEpochTime())) {
+      offset += 3600;
+    }
+
+    int localHours = (rawHours + offset / 3600) % 24;
+
+    char timeStr[6];
+    snprintf(timeStr, sizeof(timeStr), "%02d:%02d", localHours, rawMinutes);
+
+    parola.print(timeStr);
+    while (!parola.displayAnimate()) {
+      // Attendre que l'animation soit terminée
+    }
+  } else {
+    parola.print("X Wifi X");
+    while (!parola.displayAnimate()) {
+      // Attendre que l'animation soit terminée
+    }
   }
-
-  int localHours = (rawHours + offset / 3600) % 24;
-
-  char timeStr[6];
-  snprintf(timeStr, sizeof(timeStr), "%02d:%02d", localHours, rawMinutes);
-
-  parola.print(timeStr);
   delay(1000);
 }
 
